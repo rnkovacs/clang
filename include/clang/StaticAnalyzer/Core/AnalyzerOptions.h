@@ -280,6 +280,9 @@ private:
   /// \sa shouldSuppressFromCXXStandardLibrary
   Optional<bool> SuppressFromCXXStandardLibrary;
 
+  /// \sa shouldPostProcessBugReports
+  Optional<bool> PostProcessBugReports;
+
   /// \sa reportIssuesInMainSourceFile
   Optional<bool> ReportIssuesInMainSourceFile;
 
@@ -574,6 +577,13 @@ public:
   /// This is controlled by the 'suppress-c++-stdlib' config option,
   /// which accepts the values "true" and "false".
   bool shouldSuppressFromCXXStandardLibrary();
+
+  /// Returns whether bug reports should be postprocessed using the Z3
+  /// constraint manager backend.
+  ///
+  /// This is controlled by the 'postprocess-reports' config option,
+  /// which accepts the values "true" and "false".
+  bool shouldPostProcessBugReports();
 
   /// Returns whether or not the diagnostic report should be always reported
   /// in the main source file and not the headers.

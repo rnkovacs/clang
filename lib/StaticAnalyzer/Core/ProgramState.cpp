@@ -13,6 +13,8 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
@@ -78,6 +80,10 @@ ProgramStateManager::ProgramStateManager(ASTContext &Ctx,
     CallEventMgr(new CallEventManager(alloc)), Alloc(alloc) {
   StoreMgr = (*CreateSMgr)(*this);
   ConstraintMgr = (*CreateCMgr)(*this, SubEng);
+  AnalyzerOptions &Opts = SubEng->getAnalysisManager().getAnalyzerOptions();
+  RefutationMgr = Opts.shouldPostProcessBugReports()
+                  ? CreateZ3ConstraintManager(*this, SubEng)
+                  : nullptr;
 }
 
 

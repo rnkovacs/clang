@@ -175,6 +175,10 @@ public:
     return checkNull(State, Sym);
   }
 
+  virtual bool checkRangedStateConstraints(ProgramStateRef State) {
+    return true;
+  }
+
 protected:
   /// A flag to indicate that clients should be notified of assumptions.
   /// By default this is the case, but sometimes this needs to be restricted

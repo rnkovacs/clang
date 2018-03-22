@@ -475,6 +475,7 @@ private:
   EnvironmentManager                   EnvMgr;
   std::unique_ptr<StoreManager>        StoreMgr;
   std::unique_ptr<ConstraintManager>   ConstraintMgr;
+  std::unique_ptr<ConstraintManager>   RefutationMgr;
 
   ProgramState::GenericDataMap::Factory     GDMFactory;
   TaintedSubRegions::Factory TSRFactory;
@@ -540,6 +541,7 @@ public:
 
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
+  ConstraintManager& getRefutationManager() { return *RefutationMgr; }
   SubEngine* getOwningEngine() { return Eng; }
 
   ProgramStateRef removeDeadBindings(ProgramStateRef St,

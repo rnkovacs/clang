@@ -2333,3 +2333,26 @@ CXXSelfAssignmentBRVisitor::VisitNode(const ExplodedNode *Succ,
 
   return std::move(Piece);
 }
+
+std::shared_ptr<PathDiagnosticPiece>
+FalsePositiveRefutationBRVisitor::VisitNode(const ExplodedNode *Succ,
+                                            const ExplodedNode *Prev,
+                                            BugReporterContext &BRC,
+                                            BugReport &BR) {
+  if (isInvalidated)
+    return nullptr;
+
+  if (Succ->getLocation().getKind() != ProgramPoint::BlockEdgeKind)
+    return nullptr;
+
+  ConstraintManager &RefutationMgr =
+    BRC.getStateManager().getRefutationManager();
+
+  if (!RefutationMgr.checkRangedStateConstraints(Succ->getState())) {
+    const LocationContext *LC = Succ->getLocationContext();
+    BR.markInvalid("Infeasible constraints", LC);
+    isInvalidated = true;
+  }
+
+  return nullptr;
+}

@@ -343,6 +343,24 @@ public:
                                                  BugReport &BR) override;
 };
 
+class FalsePositiveRefutationBRVisitor final
+    : public BugReporterVisitorImpl<FalsePositiveRefutationBRVisitor> {
+  bool isInvalidated = false;
+
+public:
+  FalsePositiveRefutationBRVisitor() = default;
+
+  void Profile(llvm::FoldingSetNodeID &ID) const override {
+    static int Tag = 0;
+    ID.AddPointer(&Tag);
+  }
+
+  std::shared_ptr<PathDiagnosticPiece> VisitNode(const ExplodedNode *Succ,
+                                                 const ExplodedNode *Prev,
+                                                 BugReporterContext &BRC,
+                                                 BugReport &BR) override;
+};
+
 namespace bugreporter {
 
 /// Attempts to add visitors to trace a null or undefined value back to its

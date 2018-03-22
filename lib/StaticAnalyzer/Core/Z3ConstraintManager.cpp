@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "RangedConstraintManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
@@ -915,6 +916,8 @@ public:
   void print(ProgramStateRef St, raw_ostream &Out, const char *nl,
              const char *sep) override;
 
+  bool checkRangedStateConstraints(ProgramStateRef State) override;
+
   //===------------------------------------------------------------------===//
   // Implementation for interface from SimpleConstraintManager.
   //===------------------------------------------------------------------===//
@@ -1233,6 +1236,47 @@ Z3ConstraintManager::removeDeadBindings(ProgramStateRef State,
   }
 
   return State->set<ConstraintZ3>(CZ);
+}
+
+bool Z3ConstraintManager::checkRangedStateConstraints(ProgramStateRef State) {
+  Solver.reset();
+  ConstraintRangeTy CR = State->get<ConstraintRange>();
+
+  for (ConstraintRangeTy::iterator I = CR.begin(), E = CR.end(); I != E; ++I) {
+    SymbolRef Sym = I.getKey();
+
+    for (const auto &Range : I.getData()) {
+      const llvm::APSInt &From = Range.From();
+      const llvm::APSInt &To = Range.To();
+
+      assert((getAPSIntType(From) == getAPSIntType(To)) &&
+             "Range values have different types!");
+      QualType RangeTy = getAPSIntType(From);
+      // Skip ranges whose endpoints cannot be converted to APSInts with
+      // a valid APSIntType.
+      if (RangeTy.isNull())
+        continue;
+
+      QualType SymTy;
+      Z3Expr Exp = getZ3Expr(Sym, &SymTy);
+      bool isSignedTy = SymTy->isSignedIntegerOrEnumerationType();
+
+      Z3Expr FromExp = Z3Expr::fromAPSInt(From);
+      Z3Expr ToExp = Z3Expr::fromAPSInt(To);
+
+      if (From == To) {
+        Z3Expr Eq = getZ3BinExpr(Exp, SymTy, BO_EQ, FromExp, RangeTy, nullptr);
+        Solver.addConstraint(Eq);
+      } else {
+        Z3Expr LHS = getZ3BinExpr(Exp, SymTy, BO_GE, FromExp, RangeTy, nullptr);
+        Z3Expr RHS = getZ3BinExpr(Exp, SymTy, BO_LE, ToExp, RangeTy, nullptr);
+        Solver.addConstraint(Z3Expr::fromBinOp(LHS, BO_LAnd, RHS, isSignedTy));
+      }
+    }
+  }
+  // If Z3 timeouts, Z3_L_UNDEF is returned, and we assume that the state
+  // is feasible.
+  return Solver.check() != Z3_L_FALSE;
 }
 
 //===------------------------------------------------------------------===//

@@ -3149,6 +3149,9 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
     R->addVisitor(llvm::make_unique<LikelyFalsePositiveSuppressionBRVisitor>());
     R->addVisitor(llvm::make_unique<CXXSelfAssignmentBRVisitor>());
 
+    if (getAnalyzerOptions().shouldPostProcessBugReports())
+      R->addVisitor(llvm::make_unique<FalsePositiveRefutationBRVisitor>());
+
     BugReport::VisitorList visitors;
     unsigned origReportConfigToken, finalReportConfigToken;
     LocationContextMap LCM;

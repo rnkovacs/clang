@@ -296,6 +296,12 @@ bool AnalyzerOptions::shouldSuppressFromCXXStandardLibrary() {
                           /* Default = */ true);
 }
 
+bool AnalyzerOptions::shouldPostProcessBugReports() {
+  return getBooleanOption(PostProcessBugReports,
+                          "postprocess-reports",
+                          /* Default = */ false);
+}
+
 bool AnalyzerOptions::shouldReportIssuesInMainSourceFile() {
   return getBooleanOption(ReportIssuesInMainSourceFile,
                           "report-in-main-source-file",
